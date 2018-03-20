@@ -236,7 +236,25 @@ def ImageDifference(cropped_img_prev,cropped_img_after):
     diff = (diff * 255).astype("uint8")#255
     print("SSIM: {}".format(score))
 
-    thresh = cv2.threshold(diff, 30, 255,	cv2.THRESH_BINARY_INV)[1]
+    cv2.namedWindow('Mask')
+    threshLow = 30
+
+    while(True):
+#        diff_copy = diff_copy_copy.copy()
+        cv2.createTrackbar('Threshold','Mask',threshLow,255,callback)
+
+        threshLow = cv2.getTrackbarPos('Threshold','Mask')
+
+        thresh = cv2.threshold(diff, threshLow, 255,	cv2.THRESH_BINARY_INV)[1]# | cv2.THRESH_OTSU
+        thresh = cv2.erode(thresh, None, iterations=2)
+        thresh = cv2.dilate(thresh, None, iterations=2)
+
+        cv2.imshow('Mask',thresh)
+        k = cv2.waitKey(1) & 0xFF
+        if k == ord('c') or k == 113:
+            break
+
+    #thresh = cv2.threshold(diff, 30, 255,	cv2.THRESH_BINARY_INV)[1]
     return thresh,diff,prev,after
 
 def callback(x):
@@ -270,10 +288,6 @@ def FindPrevContours(cropped_img_prev):
             break
 
     return max_prev_cnts
-    #    if(len(prev_cnts)>0):
-    #        c = max(prev_cnts, key=cv2.contourArea)
-    #    else:
-    #        print('Problem!No contours found in previous img!')
 
 
 def FindContours(thresh,cropped_img_prev,cropped_img_after,diff):
